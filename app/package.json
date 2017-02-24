@@ -1,0 +1,16 @@
+{
+  "name": "kafkatron",
+  "version": "0.0.0",
+  "description": "A kafka desktop client",
+  "main": "./dist/main.js",
+  "dependencies": {
+    "kafka-node": "^1.3.2",
+    "nedb": "^1.8.0",
+    "vue": "^2.1.10",
+    "vue-electron": "^1.0.6",
+    "vue-router": "^2.1.2",
+    "vuetify": "^0.8.7"
+  },
+  "devDependencies": {},
+  "author": "Shaunn Barron <shaunn.barron@gmail.com>"
+}
