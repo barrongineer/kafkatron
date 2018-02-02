@@ -84,10 +84,10 @@
                         </v-text-input>
 
                         <v-text-input
-                            id="connection-groupid"
-                            name="connection-groupid"
-                            label="Group ID"
-                            v-model="connection.groupId">
+                                id="connection-groupid"
+                                name="connection-groupid"
+                                label="Group ID"
+                                v-model="connection.groupId">
                         </v-text-input>
                     </v-card-text>
 
@@ -118,99 +118,97 @@
 <script>
     var ipcRenderer = require('electron').ipcRenderer;
 
-  export default {
-    components: {
+    export default {
+        components: {},
 
-    },
+        name: 'connections',
 
-    name: 'connections',
+        created () {
+            var _this = this;
+            console.log('Retrieving connections...');
 
-    created () {
-        var _this = this;
-        console.log('Retrieving connections...');
-
-        ipcRenderer.on('FIND_ALL_CONNECTIONS', function (event, connections) {
-                    console.log('received response from FIND_ALL_CONNECTIONS');
-                    console.log('connections: ' + connections.length);
-                    connections.forEach(c => {
-                        console.log('name: ' + c.name);
-                    });
-
-                    _this.connections = connections;
+            ipcRenderer.on('FIND_ALL_CONNECTIONS', function (event, connections) {
+                console.log('received response from FIND_ALL_CONNECTIONS');
+                console.log('connections: ' + connections.length);
+                connections.forEach(c => {
+                    console.log('name: ' + c.name);
                 });
 
-        ipcRenderer.on('PRODUCER_READY', function (event, response) {
-            console.log('received response from ZK_CONNECT');
-            _this.$router.replace('main');
-        });
+                _this.connections = connections;
+            });
 
-        ipcRenderer.send('FIND_ALL_CONNECTIONS');
-    },
+            ipcRenderer.on('PRODUCER_READY', function (event, response) {
+                console.log('received response from ZK_CONNECT');
+                _this.$router.replace('main');
+            });
 
-    data () {
-        return {
-            connections: {},
-            connection: {},
-            operation: 'add'
-        }
-    },
-
-    methods: {
-        addConnection: function (event) {
-            console.log('Adding the new connection...');
-
-            ipcRenderer.send('SAVE_CONNECTION', this.connection);
-            ipcRenderer.send('FIND_ALL_CONNECTIONS');
-
-            this.closeModal();
-        },
-
-        updateConnection: function(event) {
-            ipcRenderer.send('UPDATE_CONNECTION', this.connection);
-            ipcRenderer.send('FIND_ALL_CONNECTIONS');
-
-            this.closeModal();
-        },
-
-        selectConnection: function (connection) {
-            console.log(`Selected connection: ${connection.name}`);
-
-            ipcRenderer.send('ZK_CONNECT', connection);
-        },
-
-        add: function(event) {
-            console.log('Opening the add connection modal...');
-
-            this.operation = 'add';
-            this.connection = {};
-
-            this.openModal();
-        },
-
-        edit: function(connection) {
-            console.log(`Editing connection: ${connection.name}`);
-            this.connection = connection;
-            this.operation = 'edit';
-
-            this.openModal();
-        },
-
-        remove: function(connection) {
-            console.log(`Removing connection: ${connection.name}`);
-
-            ipcRenderer.send('DELETE_CONNECTION', connection);
             ipcRenderer.send('FIND_ALL_CONNECTIONS');
         },
 
-        openModal: function() {
-            this.$vuetify.bus.pub('modal:open:connection-modal')
+        data () {
+            return {
+                connections: {},
+                connection: {},
+                operation: 'add'
+            }
         },
 
-        closeModal: function() {
-            this.$vuetify.bus.pub('modal:close:connection-modal')
+        methods: {
+            addConnection: function (event) {
+                console.log('Adding the new connection...');
+
+                ipcRenderer.send('SAVE_CONNECTION', this.connection);
+                ipcRenderer.send('FIND_ALL_CONNECTIONS');
+
+                this.closeModal();
+            },
+
+            updateConnection: function (event) {
+                ipcRenderer.send('UPDATE_CONNECTION', this.connection);
+                ipcRenderer.send('FIND_ALL_CONNECTIONS');
+
+                this.closeModal();
+            },
+
+            selectConnection: function (connection) {
+                console.log(`Selected connection: ${connection.name}`);
+
+                ipcRenderer.send('ZK_CONNECT', connection);
+            },
+
+            add: function (event) {
+                console.log('Opening the add connection modal...');
+
+                this.operation = 'add';
+                this.connection = {};
+
+                this.openModal();
+            },
+
+            edit: function (connection) {
+                console.log(`Editing connection: ${connection.name}`);
+                this.connection = connection;
+                this.operation = 'edit';
+
+                this.openModal();
+            },
+
+            remove: function (connection) {
+                console.log(`Removing connection: ${connection.name}`);
+
+                ipcRenderer.send('DELETE_CONNECTION', connection);
+                ipcRenderer.send('FIND_ALL_CONNECTIONS');
+            },
+
+            openModal: function () {
+                this.$vuetify.bus.pub('modal:open:connection-modal')
+            },
+
+            closeModal: function () {
+                this.$vuetify.bus.pub('modal:close:connection-modal')
+            }
         }
     }
-  }
 </script>
 
 <style scoped>

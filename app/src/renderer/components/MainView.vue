@@ -134,169 +134,169 @@
 </template>
 
 <script>
-  var ipcRenderer = require('electron').ipcRenderer;
+    var ipcRenderer = require('electron').ipcRenderer;
 
-  import CurrentPage from './LandingPageView/CurrentPage'
-  import Links from './LandingPageView/Links'
-  import Versions from './LandingPageView/Versions'
-  export default {
-    components: {
-      CurrentPage,
-      Links,
-      Versions
-    },
+    import CurrentPage from './LandingPageView/CurrentPage'
+    import Links from './LandingPageView/Links'
+    import Versions from './LandingPageView/Versions'
+    export default {
+        components: {
+            CurrentPage,
+            Links,
+            Versions
+        },
 
-    created () {
-        var _this = this;
+        created () {
+            var _this = this;
 
-        ipcRenderer.on('CONNECTION_CLOSED', function () {
-            _this.$router.replace('connections');
-        });
+            ipcRenderer.on('CONNECTION_CLOSED', function () {
+                _this.$router.replace('connections');
+            });
 
-        ipcRenderer.on('LIST_TOPICS', function (event, response) {
-            console.log('received response from LIST_TOPICS');
+            ipcRenderer.on('LIST_TOPICS', function (event, response) {
+                console.log('received response from LIST_TOPICS');
 
-            if (response.err) {
-                console.log(err);
-                return
-            }
+                if (response.err) {
+                    console.log(err);
+                    return
+                }
 
-            if (response.results.length > 1) {
-                let metadata = response.results[1].metadata;
+                if (response.results.length > 1) {
+                    let metadata = response.results[1].metadata;
 
-                let topics = [];
-                for (var property in metadata) {
-                    if (metadata.hasOwnProperty(property)) {
-                        if (property !== '__consumer_offsets') {
-                            topics.push(property)
+                    let topics = [];
+                    for (var property in metadata) {
+                        if (metadata.hasOwnProperty(property)) {
+                            if (property !== '__consumer_offsets') {
+                                topics.push(property)
+                            }
                         }
                     }
+
+                    console.log(`topics size: ${topics.length}`);
+
+                    _this.topics = topics;
+                }
+            });
+
+            ipcRenderer.on('TOPIC_CREATED', function (event, response) {
+                if (response.err) {
+                    console.log(`Error: ${err}`);
+                    return;
                 }
 
-                console.log(`topics size: ${topics.length}`);
+                console.log(`TOPIC_CREATED RESPONSE: ${response.data}`);
 
-                _this.topics = topics;
-            }
-        });
+                setTimeout(function () {
+                    ipcRenderer.send('LIST_TOPICS');
+                }, 2000);
+            });
 
-        ipcRenderer.on('TOPIC_CREATED', function (event, response) {
-            if (response.err) {
-                console.log(`Error: ${err}`);
-                return;
-            }
+            ipcRenderer.on('MESSAGE_CONSUMED', function (event, message) {
+                _this.messages.unshift(message);
+            });
 
-            console.log(`TOPIC_CREATED RESPONSE: ${response.data}`);
-
-            setTimeout(function () {
-                ipcRenderer.send('LIST_TOPICS');
-            }, 2000);
-        });
-
-        ipcRenderer.on('MESSAGE_CONSUMED', function (event, message) {
-            _this.messages.unshift(message);
-        });
-
-        ipcRenderer.send('LIST_TOPICS');
-    },
-
-    name: 'landing-page',
-
-    data () {
-        return {
-            topics: [],
-            topic: null,
-            message: null,
-            messages: [],
-            clearMessage: false,
-            newTopic: null
-        }
-    },
-
-    methods: {
-        toggleSidebar: function() {
-            this.$vuetify.bus.pub('sidebar:toggle:sidebar')
+            ipcRenderer.send('LIST_TOPICS');
         },
 
-        closeConnection: function() {
-            ipcRenderer.send('CLOSE_CONNECTION');
-        },
+        name: 'landing-page',
 
-        setTopic: function(topic) {
-            console.log(`setting topic to: ${topic}`);
-
-            if (topic !== this.topic) {
-                this.topic = topic;
-
-                ipcRenderer.send('CREATE_CONSUMER', topic);
+        data () {
+            return {
+                topics: [],
+                topic: null,
+                message: null,
+                messages: [],
+                clearMessage: false,
+                newTopic: null
             }
         },
 
-        createTopic: function() {
-            console.log(`creating topic: ${this.newTopic}`);
+        methods: {
+            toggleSidebar: function () {
+                this.$vuetify.bus.pub('sidebar:toggle:sidebar')
+            },
 
-            ipcRenderer.send('CREATE_TOPIC', this.newTopic);
+            closeConnection: function () {
+                ipcRenderer.send('CLOSE_CONNECTION');
+            },
 
-            this.closeModal();
-            this.newTopic = null;
-        },
+            setTopic: function (topic) {
+                console.log(`setting topic to: ${topic}`);
 
-        sendMessage: function() {
-            console.log(`sending message: ${this.message}`);
+                if (topic !== this.topic) {
+                    this.topic = topic;
 
-            if (this.message) {
-                ipcRenderer.send('SEND_MESSAGE', {topic: this.topic, payload: this.message});
-
-                if (this.clearMessage) {
-                    this.message = null;
+                    ipcRenderer.send('CREATE_CONSUMER', topic);
                 }
+            },
+
+            createTopic: function () {
+                console.log(`creating topic: ${this.newTopic}`);
+
+                ipcRenderer.send('CREATE_TOPIC', this.newTopic);
+
+                this.closeModal();
+                this.newTopic = null;
+            },
+
+            sendMessage: function () {
+                console.log(`sending message: ${this.message}`);
+
+                if (this.message) {
+                    ipcRenderer.send('SEND_MESSAGE', {topic: this.topic, payload: this.message});
+
+                    if (this.clearMessage) {
+                        this.message = null;
+                    }
+                }
+            },
+
+            openModal: function () {
+                this.$vuetify.bus.pub('modal:open:newTopic-modal')
+            },
+
+            closeModal: function () {
+                this.$vuetify.bus.pub('modal:close:newTopic-modal')
             }
-        },
-
-        openModal: function() {
-            this.$vuetify.bus.pub('modal:open:newTopic-modal')
-        },
-
-        closeModal: function() {
-            this.$vuetify.bus.pub('modal:close:newTopic-modal')
         }
     }
-  }
 </script>
 
 <style scoped>
-  img {
-    margin-top: -25px;
-    width: 450px;
-  }
+    img {
+        margin-top: -25px;
+        width: 450px;
+    }
 
-  #create-topic-btn {
-    position: fixed;
-    bottom: 0;
-    right: 10px;
-  }
+    #create-topic-btn {
+        position: fixed;
+        bottom: 0;
+        right: 10px;
+    }
 
-  .list__sub-header {
-    font-size: 28px;
-    font-weight: bold;
-  }
+    .list__sub-header {
+        font-size: 28px;
+        font-weight: bold;
+    }
 
-  .list__tile__title {
-    font-size: 18px;
-  }
+    .list__tile__title {
+        font-size: 18px;
+    }
 
-  .card {
-    word-wrap: break-word;
-  }
+    .card {
+        word-wrap: break-word;
+    }
 
-  .sidebar--open {
-    min-width: 300px;
-  }
+    .sidebar--open {
+        min-width: 300px;
+    }
 
-  .card__row--actions {
+    .card__row--actions {
         border-top: none;
-  }
+    }
 
-  #submit-btn {
+    #submit-btn {
         margin-left: 20px;
     }
 </style>
